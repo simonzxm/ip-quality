@@ -328,7 +328,30 @@ async function db_dbip(ip) {
   };
 }
 
-// IPQS removed — gateway timeout, no API key yet
+async function db_ipqs(ip, env) {
+  const IPQS_KEY = env?.IPQS_API_KEY || '';
+  if (!IPQS_KEY) return null;
+  const data = await fetchJSON(`https://ipqualityscore.com/api/json/ip/${IPQS_KEY}/${ip}?strictness=1&allow_public_access_points=true`);
+  if (!data || !data.success) return null;
+
+  const score = parseInt(data.fraud_score) || 0;
+  let risk = 'Low';
+  if (score >= 90) risk = 'High Risk';
+  else if (score >= 85) risk = 'Risky';
+  else if (score >= 75) risk = 'Suspicious';
+
+  return {
+    source: 'IPQS',
+    countryCode: data.country_code || null,
+    proxy: data.proxy ?? null,
+    tor: data.tor ?? null,
+    vpn: data.vpn ?? null,
+    abuser: data.recent_abuse ?? null,
+    robot: data.bot_status ?? null,
+    score,
+    risk,
+  };
+}
 
 async function db_ipdata(ip, env) {
   const IPDATA_KEY = env?.IPDATA_API_KEY || '';
@@ -354,7 +377,7 @@ async function db_ipdata(ip, env) {
 
 // ─── Main Check Handler ─────────────────────────────────────────────────────
 async function handleCheck(ip, env) {
-  const [ipinfo, scamalytics, ipregistry, ipapi, abuseipdb, dbip, ipdata] =
+  const [ipinfo, scamalytics, ipregistry, ipapi, abuseipdb, dbip, ipqs, ipdata] =
     await Promise.all([
       db_ipinfo(ip),
       db_scamalytics(ip),
@@ -362,6 +385,7 @@ async function handleCheck(ip, env) {
       db_ipapi(ip),
       db_abuseipdb(ip, env),
       db_dbip(ip),
+      db_ipqs(ip, env),
       db_ipdata(ip, env),
     ]);
 
@@ -398,17 +422,18 @@ async function handleCheck(ip, env) {
       scamalytics: scamalytics ? { score: scamalytics.score, risk: scamalytics.risk, max: 100 } : null,
       ipapi: ipapi ? { score: ipapi.score, scoreNum: ipapi.scoreNum, risk: ipapi.risk, max: 1 } : null,
       abuseipdb: abuseipdb ? { score: abuseipdb.score, risk: abuseipdb.risk, max: 100 } : null,
+      ipqs: ipqs ? { score: ipqs.score, risk: ipqs.risk, max: 100 } : null,
       dbip: dbip ? { score: dbip.score, risk: dbip.risk, max: 100 } : null,
     },
     factors: {
-      databases: ['ipapi', 'ipregistry', 'Scamalytics', 'ipdata', 'IPinfo', 'AbuseIPDB', 'DB-IP'],
-      countryCode: [ipapi?.countryCode, ipregistry?.countryCode, scamalytics?.countryCode, ipdata?.countryCode, ipinfo?.countryCode, abuseipdb?.countryCode, dbip?.countryCode],
-      proxy: [ipapi?.proxy, ipregistry?.proxy, scamalytics?.proxy, ipdata?.proxy, ipinfo?.proxy, null, null],
-      tor: [ipapi?.tor, ipregistry?.tor, scamalytics?.tor, ipdata?.tor, ipinfo?.tor, abuseipdb?.tor, null],
-      vpn: [ipapi?.vpn, ipregistry?.vpn, scamalytics?.vpn, null, ipinfo?.vpn, null, null],
-      server: [ipapi?.server, ipregistry?.server, scamalytics?.server, ipdata?.server, ipinfo?.server, null, null],
-      abuser: [ipapi?.abuser, ipregistry?.abuser, scamalytics?.abuser, ipdata?.abuser, null, null, null],
-      robot: [ipapi?.robot, null, scamalytics?.robot, null, null, null, dbip?.robot],
+      databases: ['ipapi', 'ipregistry', 'IPQS', 'Scamalytics', 'ipdata', 'IPinfo', 'AbuseIPDB', 'DB-IP'],
+      countryCode: [ipapi?.countryCode, ipregistry?.countryCode, ipqs?.countryCode, scamalytics?.countryCode, ipdata?.countryCode, ipinfo?.countryCode, abuseipdb?.countryCode, dbip?.countryCode],
+      proxy: [ipapi?.proxy, ipregistry?.proxy, ipqs?.proxy, scamalytics?.proxy, ipdata?.proxy, ipinfo?.proxy, null, null],
+      tor: [ipapi?.tor, ipregistry?.tor, ipqs?.tor, scamalytics?.tor, ipdata?.tor, ipinfo?.tor, abuseipdb?.tor, null],
+      vpn: [ipapi?.vpn, ipregistry?.vpn, ipqs?.vpn, scamalytics?.vpn, null, ipinfo?.vpn, null, null],
+      server: [ipapi?.server, ipregistry?.server, null, scamalytics?.server, ipdata?.server, ipinfo?.server, null, null],
+      abuser: [ipapi?.abuser, ipregistry?.abuser, ipqs?.abuser, scamalytics?.abuser, ipdata?.abuser, null, null, null],
+      robot: [ipapi?.robot, null, ipqs?.robot, scamalytics?.robot, null, null, null, dbip?.robot],
     },
   };
 }
@@ -732,6 +757,7 @@ function renderScores(s) {
     { name: 'Scamalytics', d: s.scamalytics, max: 100 },
     { name: 'ipapi', d: s.ipapi, max: 100 },
     { name: 'AbuseIPDB', d: s.abuseipdb, max: 100 },
+    { name: 'IPQS', d: s.ipqs, max: 100 },
     { name: 'DB-IP', d: s.dbip, max: 100 },
   ];
   items.forEach(item => {
