@@ -421,7 +421,7 @@ function getHTML(visitorIP) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IP 质量体检 | IP Quality Check</title>
+<title>IP 质量检测 | IP Quality Check</title>
 <meta name="description" content="在线查询IP地址质量，包括基础信息、风险评分、IP类型和风险因子检测。基于多个权威数据库聚合分析。">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
