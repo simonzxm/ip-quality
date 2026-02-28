@@ -567,14 +567,54 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 .footer a{color:var(--accent-light);text-decoration:none}
 
 @media(max-width:768px){
-  .container{padding:1rem}
+  .container{padding:1rem 0.75rem}
+  .header{padding:2rem 0 1.5rem}
   .header h1{font-size:1.6rem}
-  .card{padding:1.2rem}
-  .factor-grid{font-size:0.65rem;grid-template-columns:70px repeat(var(--cols,8),1fr)}
-  .factor-grid .fl{font-size:0.68rem;padding:0.4rem}
-  .factor-grid .fh{font-size:0.6rem;padding:0.4rem 0.2rem}
-  .info-label{min-width:85px;font-size:0.8rem}
-  .score-name{min-width:75px;font-size:0.76rem}
+  .header p{font-size:0.85rem}
+  .search-box{margin:1rem auto 2rem}
+  .search-box input{padding:0.8rem 1rem;font-size:0.95rem}
+  .search-box button{padding:0.8rem 1.2rem;font-size:0.85rem}
+  .card{padding:1.2rem 1rem;margin-bottom:1rem;border-radius:12px}
+  .card-title{font-size:0.95rem;margin-bottom:1rem}
+  .info-row{flex-wrap:wrap;gap:0.2rem;padding:0.4rem 0.5rem}
+  .info-label{min-width:80px;font-size:0.8rem}
+  .info-value{font-size:0.82rem;flex:1;min-width:0}
+  .type-table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .type-table thead,.type-table tbody,.type-table tr{display:table;width:100%;table-layout:fixed}
+  .type-table th,.type-table td{padding:0.5rem 0.35rem;font-size:0.7rem}
+  .type-table th{font-size:0.62rem}
+  .tag{font-size:0.7rem;padding:0.15rem 0.5rem}
+  .score-item{gap:0.5rem;padding:0.55rem 0;flex-wrap:wrap}
+  .score-name{min-width:70px;font-size:0.76rem}
+  .score-bar-container{flex:1;min-width:80px}
+  .score-value{min-width:40px;font-size:0.76rem}
+  .score-risk{min-width:auto}
+  .factor-grid{font-size:0.65rem;grid-template-columns:65px repeat(var(--cols,6),1fr);overflow-x:auto;display:grid}
+  .factor-grid .fl{font-size:0.68rem;padding:0.4rem 0.35rem}
+  .factor-grid .fh{font-size:0.58rem;padding:0.4rem 0.15rem;word-break:break-all}
+  .factor-grid .fc{padding:0.4rem 0.15rem}
+  .factor-yes,.factor-no{font-size:0.72rem}
+  .factor-na{font-size:0.65rem}
+  .factor-cc{font-size:0.68rem}
+  .footer{padding:1.5rem 0;font-size:0.72rem}
+}
+@media(max-width:480px){
+  .container{padding:0.75rem 0.5rem}
+  .header h1{font-size:1.35rem}
+  .search-box form{border-radius:12px}
+  .search-box input{padding:0.7rem 0.8rem;font-size:0.88rem}
+  .search-box button{padding:0.7rem 1rem;font-size:0.8rem;letter-spacing:0.05em}
+  .card{padding:1rem 0.75rem}
+  .info-row{padding:0.3rem 0.3rem}
+  .info-label{min-width:70px;font-size:0.75rem}
+  .info-value{font-size:0.78rem}
+  .score-item{gap:0.4rem}
+  .score-name{min-width:60px;font-size:0.72rem}
+  .score-value{min-width:35px;font-size:0.72rem}
+  .factor-grid{grid-template-columns:55px repeat(var(--cols,6),1fr)}
+  .factor-grid .fl{font-size:0.62rem;padding:0.35rem 0.25rem}
+  .factor-grid .fh{font-size:0.52rem;padding:0.35rem 0.1rem}
+  .factor-yes,.factor-no{font-size:0.65rem}
 }
 </style>
 </head>
