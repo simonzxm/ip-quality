@@ -445,14 +445,14 @@ async function handleCheck(ip, env) {
       dbip: dbip ? { score: dbip.score, risk: dbip.risk, max: 100 } : null,
     },
     factors: {
-      databases: ['ipapi', 'ipregistry', 'IPQS', 'Scamalytics', 'ipdata', 'IPinfo', 'AbuseIPDB', 'DB-IP'],
-      countryCode: [ipapi?.countryCode, ipregistry?.countryCode, ipqs?.countryCode, scamalytics?.countryCode, ipdata?.countryCode, ipinfo?.countryCode, abuseipdb?.countryCode, dbip?.countryCode],
-      proxy: [ipapi?.proxy, ipregistry?.proxy, ipqs?.proxy, scamalytics?.proxy, ipdata?.proxy, ipinfo?.proxy, null, null],
-      tor: [ipapi?.tor, ipregistry?.tor, ipqs?.tor, scamalytics?.tor, ipdata?.tor, ipinfo?.tor, abuseipdb?.tor, null],
-      vpn: [ipapi?.vpn, ipregistry?.vpn, ipqs?.vpn, scamalytics?.vpn, null, ipinfo?.vpn, null, null],
-      server: [ipapi?.server, ipregistry?.server, null, scamalytics?.server, ipdata?.server, ipinfo?.server, null, null],
-      abuser: [ipapi?.abuser, ipregistry?.abuser, ipqs?.abuser, scamalytics?.abuser, ipdata?.abuser, null, null, null],
-      robot: [ipapi?.robot, null, ipqs?.robot, scamalytics?.robot, null, null, null, dbip?.robot],
+      databases: ['ipapi', 'ipregistry', 'IPQS', 'Scamalytics', 'ipdata', 'IPinfo'],
+      countryCode: [ipapi?.countryCode, ipregistry?.countryCode, ipqs?.countryCode, scamalytics?.countryCode, ipdata?.countryCode, ipinfo?.countryCode],
+      proxy: [ipapi?.proxy, ipregistry?.proxy, ipqs?.proxy, scamalytics?.proxy, ipdata?.proxy, ipinfo?.proxy],
+      tor: [ipapi?.tor, ipregistry?.tor, ipqs?.tor, scamalytics?.tor, ipdata?.tor, ipinfo?.tor],
+      vpn: [ipapi?.vpn, ipregistry?.vpn, ipqs?.vpn, scamalytics?.vpn, null, ipinfo?.vpn],
+      server: [ipapi?.server, ipregistry?.server, null, scamalytics?.server, ipdata?.server, ipinfo?.server],
+      abuser: [ipapi?.abuser, ipregistry?.abuser, ipqs?.abuser, scamalytics?.abuser, ipdata?.abuser, null],
+      robot: [ipapi?.robot, null, ipqs?.robot, scamalytics?.robot, null, null],
     },
   };
 }
