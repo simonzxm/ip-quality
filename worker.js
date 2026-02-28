@@ -223,8 +223,12 @@ async function db_ipregistry(ip, env) {
   };
 }
 
-async function db_ipapi(ip) {
-  const data = await fetchJSON(`https://api.ipapi.is/?q=${ip}`);
+async function db_ipapi(ip, env) {
+  const apiKey = env?.IPAPI_API_KEY || '';
+  const url = apiKey
+    ? `https://api.ipapi.is/?q=${ip}&key=${apiKey}`
+    : `https://api.ipapi.is/?q=${ip}`;
+  const data = await fetchJSON(url);
   if (!data) return null;
   const scoreText = data?.company?.abuser_score || '';
   const scoreNum = parseFloat(scoreText) || 0;
@@ -240,9 +244,22 @@ async function db_ipapi(ip) {
 
   return {
     source: 'ipapi',
+    // Basic info fields
+    asn: data?.asn?.asn || null,
+    org: data?.asn?.org || null,
+    city: data?.location?.city || null,
+    post: data?.location?.zip || null,
+    subdivision: data?.location?.state || null,
+    lat: data?.location?.latitude || null,
+    lon: data?.location?.longitude || null,
+    continentCode: data?.location?.continent || null,
+    countryCode: data?.location?.country_code || null,
+    country: data?.location?.country || null,
+    timezone: data?.location?.timezone || null,
+    // Type fields
     usetype: data?.asn?.type || null,
     comtype: data?.company?.type || null,
-    countryCode: data?.location?.country_code || null,
+    // Risk fields
     proxy: data?.is_proxy ?? null,
     tor: data?.is_tor ?? null,
     vpn: data?.is_vpn ?? null,
@@ -382,21 +399,22 @@ async function handleCheck(ip, env) {
       db_ipinfo(ip),
       db_scamalytics(ip),
       db_ipregistry(ip, env),
-      db_ipapi(ip),
+      db_ipapi(ip, env),
       db_abuseipdb(ip, env),
       db_dbip(ip),
       db_ipqs(ip, env),
       db_ipdata(ip, env),
     ]);
 
-  const basicSource = ipinfo;
+  // Use ipapi as primary basic info source, fallback to ipinfo
+  const basicSource = ipapi || ipinfo;
   const isNative = basicSource?.countryCode === (basicSource?.regCountryCode || basicSource?.countryCode);
 
   return {
     ip,
     ipVersion: getIPVersion(ip),
     basic: {
-      source: 'IPinfo',
+      source: ipapi ? 'ipapi' : 'IPinfo',
       asn: basicSource?.asn,
       org: basicSource?.org,
       city: basicSource?.city,
@@ -408,7 +426,8 @@ async function handleCheck(ip, env) {
       map: basicSource?.lat && basicSource?.lon ? generateMapUrl(basicSource.lat, basicSource.lon, 1000) : null,
       countryCode: basicSource?.countryCode,
       country: basicSource?.country || basicSource?.countryCode,
-      regCountryCode: basicSource?.regCountryCode,
+      continentCode: basicSource?.continentCode || null,
+      regCountryCode: ipinfo?.regCountryCode || null,
       timezone: basicSource?.timezone,
       isNative,
     },
@@ -563,7 +582,7 @@ body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;backg
 
 <div class="container">
   <header class="header">
-    <h1>🔍 IP 质量体检</h1>
+    <h1>🔍 IP 质量检测</h1>
     <p>多数据库聚合分析 · IP Quality Check</p>
     <div class="version">Powered by Cloudflare Workers</div>
   </header>
@@ -746,7 +765,7 @@ function getRiskTag(risk) {
   if (r.includes('high') || r.includes('dos') || r.includes('risky')) cls = 'tag-red';
   else if (r.includes('medium') || r.includes('elevated') || r.includes('suspicious')) cls = 'tag-yellow';
   else if (r.includes('very low')) cls = 'tag-green';
-  const map = {'low':'低风险','very low':'极低风险','medium':'中风险','elevated':'较高','high':'高风险','very high':'极高风险','dos-level':'建议封禁','suspicious':'可疑','risky':'存在风险','high risk':'高风险'};
+  const map = {'very low':'极低风险','low':'低风险','medium':'中风险','elevated':'较高','high':'高风险','very high':'极高风险','dos-level':'建议封禁','suspicious':'可疑','risky':'存在风险','high risk':'高风险'};
   return '<span class="tag ' + cls + '">' + (map[r] || risk) + '</span>';
 }
 
@@ -762,10 +781,21 @@ function renderScores(s) {
   ];
   items.forEach(item => {
     if (!item.d || item.d.score === null || item.d.score === undefined) return;
-    const score = item.name === 'ipapi' ? (item.d.scoreNum * 100) : item.d.score;
-    const pct = Math.min(100, Math.max(0, (score / item.max) * 100));
-    const color = getScoreColor(score, item.max);
-    const dispScore = item.name === 'ipapi' ? item.d.score : item.d.score;
+    let score, pct, color, dispScore;
+    if (item.name === 'ipapi') {
+      // ipapi: use risk level for bar, not raw percentage
+      dispScore = item.d.score;
+      const riskMap = { 'very low': 0, 'low': 25, 'elevated': 50, 'high': 75, 'very high': 100 };
+      const riskKey = (item.d.risk || 'low').toLowerCase();
+      pct = riskMap[riskKey] ?? 25;
+      const colorMap = { 'very low': 'var(--green)', 'low': 'var(--green)', 'elevated': 'var(--yellow)', 'high': 'var(--orange)', 'very high': 'var(--red)' };
+      color = colorMap[riskKey] || 'var(--green)';
+    } else {
+      score = item.d.score;
+      pct = Math.min(100, Math.max(0, (score / item.max) * 100));
+      color = getScoreColor(score, item.max);
+      dispScore = item.d.score;
+    }
     html += '<div class="score-item"><span class="score-name">' + item.name + '</span>';
     html += '<div class="score-bar-container"><div class="score-bar" style="width:' + pct + '%;background:' + color + '"></div></div>';
     html += '<span class="score-value" style="color:' + color + '">' + dispScore + '</span>';
@@ -776,8 +806,8 @@ function renderScores(s) {
 }
 
 function factorCell(val) {
-  if (val === true) return '<span class="factor-yes">✗ 是</span>';
-  if (val === false) return '<span class="factor-no">✓ 否</span>';
+  if (val === true) return '<span class="factor-yes">是</span>';
+  if (val === false) return '<span class="factor-no">否</span>';
   if (typeof val === 'string' && val.length === 2) return '<span class="factor-cc">' + esc(val) + '</span>';
   return '<span class="factor-na">N/A</span>';
 }
